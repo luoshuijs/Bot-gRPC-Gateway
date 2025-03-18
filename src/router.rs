@@ -1,16 +1,16 @@
 use dashmap::DashMap;
 use std::sync::Arc;
 use tokio::task::JoinHandle;
-use tonic::transport::Channel;
 use tonic::Status;
+use tonic::transport::Channel;
 
 pub mod gateway_proto {
     tonic::include_proto!("gateway");
 }
 
 use crate::gateway_proto::{
-    gateway_service_client::GatewayServiceClient, HealthCheckRequest, Message, RegisterResponse,
-    ServiceInfo,
+    HealthCheckRequest, Message, RegisterResponse, ServiceInfo,
+    gateway_service_client::GatewayServiceClient,
 };
 
 // 路由表：存储已注册的服务及其支持的命令
@@ -66,7 +66,7 @@ impl Router {
 
         // 更新命令路由表
         for cmd in &info.commands {
-            let mut routes = self.cmd_routes.entry(cmd.clone()).or_insert_with(Vec::new);
+            let mut routes = self.cmd_routes.entry(cmd.clone()).or_default();
             if !routes.contains(&service_id) {
                 routes.push(service_id.clone());
             }

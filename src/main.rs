@@ -1,10 +1,10 @@
-mod router;
 mod gateway;
+mod router;
 
-use std::env;
 use crate::gateway::GatewayServiceImpl;
 use crate::router::Router;
 use anyhow::Result;
+use std::env;
 use tonic::transport::Server;
 
 pub mod gateway_proto {
@@ -28,14 +28,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let gateway_service = GatewayServiceImpl::new(router);
 
     // 服务地址
-    let addr = env::var("ADDR").unwrap_or("127.0.0.1:50051".to_string()).parse()?;
+    let addr = env::var("ADDR")
+        .unwrap_or("127.0.0.1:50051".to_string())
+        .parse()?;
 
     tracing::info!("gRPC Gateway starting on {}", addr);
 
     // 构建服务
     let server = Server::builder().add_service(GatewayServiceServer::new(gateway_service));
 
-    let graceful  = server.serve_with_shutdown(addr, wait());
+    let graceful = server.serve_with_shutdown(addr, wait());
 
     graceful.await?;
 
