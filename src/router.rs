@@ -25,11 +25,18 @@ pub(crate) struct Router {
     // 服务健康状态 (服务ID -> 是否健康)
     pub(crate) health_status: Arc<DashMap<String, bool>>,
     // 路由策略配置
-    routing_strategy: Arc<DashMap<String, String>>,
+    routing_strategy: Arc<DashMap<String, RoutingStrategy>>,
     // 默认路由策略
-    default_strategy: String,
+    default_strategy: RoutingStrategy,
     // 健康检查任务句柄 (服务ID -> JoinHandle)
     health_check_handles: Arc<DashMap<String, JoinHandle<()>>>,
+}
+
+#[derive(Clone, Debug)]
+pub(crate) enum RoutingStrategy {
+    RoundRobin,     // 轮询策略
+    FirstAvailable, // 选择第一个
+    Random,         // 随机选择目标
 }
 
 impl Router {
@@ -40,7 +47,7 @@ impl Router {
             clients: Arc::new(DashMap::new()),
             health_status: Arc::new(DashMap::new()),
             routing_strategy: Arc::new(DashMap::new()),
-            default_strategy: "round_robin".to_string(),
+            default_strategy: RoutingStrategy::RoundRobin,
             health_check_handles: Arc::new(DashMap::new()),
         }
     }
@@ -148,18 +155,14 @@ impl Router {
                     }
                 } else {
                     // 基于策略选择服务
-                    return match strategy.as_str() {
-                        "first_available" => Some(healthy_services[0].clone()),
-                        "random" => {
+                    return match strategy {
+                        RoutingStrategy::FirstAvailable => Some(healthy_services[0].clone()),
+                        RoutingStrategy::Random => {
                             let idx = rand::random_range(0..healthy_services.len());
                             Some(healthy_services[idx].clone())
                         }
-                        "round_robin" => {
-                            // tODO: 跟踪上次使用的索引
-                            Some(healthy_services[0].clone())
-                        }
-                        _ => {
-                            // 默认使用第一个可用服务
+                        RoutingStrategy::RoundRobin => {
+                            // todo: 跟踪上次使用的索引
                             Some(healthy_services[0].clone())
                         }
                     };
