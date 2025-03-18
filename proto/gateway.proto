@@ -29,7 +29,6 @@ message ServiceInfo {
 message RegisterResponse {
   bool success = 1;
   string message = 2;
-  bytes payload = 3;          // 请求/响应的主体数据
 }
 
 message HealthCheckRequest {
