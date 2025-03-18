@@ -1,0 +1,48 @@
+syntax = "proto3";
+package gateway;
+
+service GatewayService {
+  rpc Forward (Message) returns (Message);
+  rpc Register (ServiceInfo) returns (RegisterResponse);
+  rpc Stream (stream Message) returns (stream Message);
+  rpc HealthCheck (HealthCheckRequest) returns (HealthCheckResponse);
+}
+
+message Message {
+  string source_service = 1;  // 请求来源服务
+  string target_service = 2;  // 目标服务
+  string cmd = 3;             // 请求的具体命令
+  string user_id = 4;         // 产生请求的用户ID
+  int64 request_time = 5;     // 请求时间（Unix时间戳）
+  string metadata = 6;        // 附加的 metadata（JSON格式）
+  bytes payload = 7;          // 请求/响应的主体数据
+}
+
+message ServiceInfo {
+  string service_id = 1;      // 服务ID
+  string service_name = 2;    // 服务名称
+  string service_addr = 3;    // 服务地址（host:port）
+  repeated string commands = 4; // 该服务支持的命令列表
+  int32 health_check_interval_sec = 5; // 健康检查间隔时间（秒）
+}
+
+message RegisterResponse {
+  bool success = 1;
+  string message = 2;
+  bytes payload = 3;          // 请求/响应的主体数据
+}
+
+message HealthCheckRequest {
+  string service_id = 1;
+}
+
+message HealthCheckResponse {
+  enum Status {
+    UNKNOWN = 0;
+    SERVING = 1;
+    NOT_SERVING = 2;
+    SERVICE_UNKNOWN = 3;
+  }
+  Status status = 1;
+  string message = 2;
+}
